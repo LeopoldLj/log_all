@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Platforms>AnyCPU</Platforms>
+    <AlgoType>Indicator</AlgoType>
+    <AssemblyName>log_all</AssemblyName>
+    <RootNamespace>log_all</RootNamespace>
+    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <FileVersion>1.0.3.0</FileVersion>
+    <Version>1.0.3</Version>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>C:\Quantower\TradingPlatform\v1.145.16\..\..\Settings\Scripts\Indicators\log_all</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>C:\Quantower\TradingPlatform\v1.145.16\..\..\Settings\Scripts\Indicators\log_all</OutputPath>
+  </PropertyGroup>
+  <Target Name="CleanupOldIndicators" AfterTargets="Build">
+    <PropertyGroup>
+      <_QtIndicatorsRoot>C:\Quantower\Settings\Scripts\Indicators</_QtIndicatorsRoot>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$root = '$(_QtIndicatorsRoot)'; $keep = (Resolve-Path '$(TargetPath)').Path; if (Test-Path $root) { Get-ChildItem -Path $root -Filter 'log_all*.dll' -Recurse | ForEach-Object { if ($_.FullName -ne $keep) { Remove-Item -Force $_.FullName } } }&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$root = '$(_QtIndicatorsRoot)'; $keep = (Resolve-Path '$(TargetDir)\\log_all.pdb').Path; if (Test-Path $root) { Get-ChildItem -Path $root -Filter 'log_all*.pdb' -Recurse | ForEach-Object { if ($_.FullName -ne $keep) { Remove-Item -Force $_.FullName } } }&quot;" />
+  </Target>
+  <Target Name="CopyVersionedDll" AfterTargets="Build">
+    <PropertyGroup>
+      <_QtIndicatorsRoot>C:\Quantower\Settings\Scripts\Indicators</_QtIndicatorsRoot>
+    </PropertyGroup>
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$src = '$(TargetPath)'; $dst = Join-Path '$(TargetDir)' ('log_all_v$(AssemblyVersion).dll'); if (Test-Path $src) { Copy-Item -Force $src $dst }&quot;" />
+  </Target>
+  <ItemGroup>
+    <Reference Include="TradingPlatform.BusinessLayer">
+      <HintPath>C:\Quantower\TradingPlatform\v1.145.16\bin\TradingPlatform.BusinessLayer.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
