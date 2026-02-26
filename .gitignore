@@ -33,4 +33,6 @@ ENV/
 .env
 pip-log.txt
 pip-delete-this-directory.txt
+# Local .NET cache
+.dotnet/
 
