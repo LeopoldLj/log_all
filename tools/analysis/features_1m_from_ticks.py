@@ -7,7 +7,7 @@ import polars as pl
 def build_1m_features(ticks: pl.LazyFrame) -> pl.LazyFrame:
     # Normalize
     ticks = ticks.with_columns(
-        pl.col("utc_now").str.to_datetime(strict=False, time_zone="UTC").alias("ts"),
+        pl.col("utc_now").cast(pl.Datetime("us", "UTC")).alias("ts"),
         pl.col("symbol").alias("symbol"),
         pl.col("price").cast(pl.Float64).alias("price"),
         pl.col("size").cast(pl.Float64).alias("size"),
@@ -39,7 +39,7 @@ def build_1m_features(ticks: pl.LazyFrame) -> pl.LazyFrame:
         .agg(
             pl.first("price").alias("poc"),
             pl.first("vol").alias("poc_vol"),
-            pl.count().alias("tpo"),
+            pl.len().alias("tpo"),
         )
     )
 
@@ -54,17 +54,38 @@ def build_1m_features(ticks: pl.LazyFrame) -> pl.LazyFrame:
             pl.sum("size").alias("total_vol"),
             pl.sum("buy_vol").alias("vol_buy"),
             pl.sum("sell_vol").alias("vol_sell"),
-            pl.count().alias("ticks"),
+            pl.len().alias("ticks"),
         )
         .with_columns((pl.col("vol_buy") - pl.col("vol_sell")).alias("delta"))
     )
 
     # CVD (cumulative delta)
     base = base.sort(["symbol", "minute"]).with_columns(
-        pl.col("delta").cumsum().over("symbol").alias("cvd")
+        pl.col("delta").cum_sum().over("symbol").alias("cvd")
     )
 
-    return base.join(poc, on=["symbol", "minute"], how="left")
+    out = base.join(poc, on=["symbol", "minute"], how="left")
+
+    # Business-friendly aliases (no duplicates)
+    out = out.rename(
+        {
+            "open": "open_price",
+            "high": "high_price",
+            "low": "low_price",
+            "close": "close_price",
+            "total_vol": "contracts_total",
+            "vol_buy": "contracts_buy",
+            "vol_sell": "contracts_sell",
+            "ticks": "trades_count",
+            "delta": "delta_contracts",
+            "cvd": "cvd_contracts",
+            "poc": "poc_price",
+            "poc_vol": "poc_contracts",
+            "tpo": "tpo_levels",
+        }
+    )
+
+    return out
 
 
 def main() -> int:

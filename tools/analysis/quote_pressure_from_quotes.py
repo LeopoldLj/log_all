@@ -12,10 +12,10 @@ QUOTE_RE = re.compile(
 
 def extract_quote_fields(s: str):
     if s is None:
-        return None
+        return {"bid": None, "bid_size": None, "ask": None, "ask_size": None}
     m = QUOTE_RE.search(s)
     if not m:
-        return None
+        return {"bid": None, "bid_size": None, "ask": None, "ask_size": None}
     return m.groupdict()
 
 
@@ -40,7 +40,19 @@ def main() -> int:
 
     # Parse quote_dump text into columns
     lf = lf.with_columns(
-        pl.col("quote_dump").map_elements(extract_quote_fields, return_dtype=pl.Object).alias("q")
+        pl.col("quote_dump")
+        .map_elements(
+            extract_quote_fields,
+            return_dtype=pl.Struct(
+                [
+                    pl.Field("bid", pl.Utf8),
+                    pl.Field("bid_size", pl.Utf8),
+                    pl.Field("ask", pl.Utf8),
+                    pl.Field("ask_size", pl.Utf8),
+                ]
+            ),
+        )
+        .alias("q")
     ).with_columns(
         pl.col("q").struct.field("bid").cast(pl.Float64).alias("bid"),
         pl.col("q").struct.field("bid_size").cast(pl.Float64).alias("bid_size"),
@@ -49,7 +61,7 @@ def main() -> int:
     ).drop("q")
 
     lf = lf.with_columns(
-        pl.col("utc_now").str.to_datetime(strict=False, time_zone="UTC").alias("ts"),
+        pl.col("utc_now").cast(pl.Datetime("us", "UTC")).alias("ts"),
         ((pl.col("bid") + pl.col("ask")) / 2.0).alias("mid"),
         (pl.col("ask") - pl.col("bid")).alias("spread"),
         ((pl.col("bid_size") - pl.col("ask_size")) / (pl.col("bid_size") + pl.col("ask_size"))).alias("book_imbalance"),
@@ -59,13 +71,13 @@ def main() -> int:
     out = (
         lf.group_by([pl.col("symbol"), pl.col("ts").dt.truncate("1m").alias("minute")])
         .agg(
-            pl.mean("spread").alias("spread_mean"),
-            pl.mean("book_imbalance").alias("imbalance_mean"),
+            pl.mean("spread").alias("spread_avg"),
+            pl.mean("book_imbalance").alias("imbalance_avg"),
             pl.max("book_imbalance").alias("imbalance_max"),
             pl.min("book_imbalance").alias("imbalance_min"),
-            pl.mean("bid_size").alias("bid_size_mean"),
-            pl.mean("ask_size").alias("ask_size_mean"),
-            pl.count().alias("quotes"),
+            pl.mean("bid_size").alias("bid_size_avg"),
+            pl.mean("ask_size").alias("ask_size_avg"),
+            pl.len().alias("quotes_count"),
         )
     )
 

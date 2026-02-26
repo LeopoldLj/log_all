@@ -25,17 +25,17 @@ def main() -> int:
         lf = lf.filter(pl.col("symbol") == args.symbol)
 
     lf = lf.with_columns(
-        pl.col("utc_now").str.to_datetime(strict=False, time_zone="UTC").alias("ts"),
+        pl.col("utc_now").cast(pl.Datetime("us", "UTC")).alias("ts"),
         pl.col("size").cast(pl.Float64).alias("size"),
     )
 
     out = (
         lf.group_by([pl.col("symbol"), pl.col("ts").dt.truncate("1m").alias("minute")])
         .agg(
-            pl.count().alias("ticks_per_min"),
-            pl.mean("size").alias("avg_size"),
-            pl.sum("size").alias("vol_sum"),
-            pl.sum((pl.col("size") >= args.large_trade).cast(pl.Int64)).alias("large_trades"),
+            pl.len().alias("trades_per_min"),
+            pl.mean("size").alias("avg_contract_size"),
+            pl.sum("size").alias("contracts_total"),
+            (pl.col("size") >= args.large_trade).cast(pl.Int64).sum().alias("large_trades_count"),
         )
     )
 

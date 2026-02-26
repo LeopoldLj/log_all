@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set QT_LOG_DIR=%USERPROFILE%\Documents\QuantowerLogs
+set QT_LOG_DIR=C:\data
 set QT_INACTIVITY_MIN=90
 set QT_PARQUET_COMPRESSION=zstd
 set QT_DELETE_ON_SUNDAY_ONLY=0
