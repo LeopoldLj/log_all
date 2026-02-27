@@ -23,6 +23,8 @@ Projet Quantower C# + pipeline Python Polars pour logging temps réel, conversio
 - Convertir en Parquet sans perte, puis archiver en ZIP.
 - Générer `features_1m_alias`, `quote_pressure_1m_alias`, `trade_speed_1m_alias`.
 - Générer le rapport HTML (`report_1m.html`).
+- Générer le rapport High/Low (`report_highlow_1m.html`).
+- Générer un dataset séquentiel (`sequential_1m.*`).
 
 ## Questions à poser
 1. Sur quel instrument/symbole ?
@@ -36,5 +38,7 @@ python tools/analysis/features_1m_from_ticks.py --parquet-dir "C:\data\parquet" 
 python tools/analysis/quote_pressure_from_quotes.py --parquet-dir "C:\data\parquet" --symbol "/NQ:XCME" --out "C:\data\parquet\quote_pressure_1m_alias.parquet"
 python tools/analysis/trade_speed_features.py --parquet-dir "C:\data\parquet" --symbol "/NQ:XCME" --out "C:\data\parquet\trade_speed_1m_alias.parquet" --large-trade 5
 python tools/analysis/build_html_report.py --dir "C:\data\parquet" --out "C:\data\parquet\report_1m.html"
+python tools/analysis/build_html_highlow_report.py --parquet "C:\data\parquet\features_1m_alias.parquet" --out "C:\data\parquet\report_highlow_1m.html"
+python tools/analysis/build_sequential_dataset.py --dir "C:\data\parquet" --symbol "/NQ:XCME" --out-base "C:\data\parquet\sequential_1m"
 ```
 

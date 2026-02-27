@@ -1,7 +1,7 @@
 # Specs
 
 ## Objectif
-Projet C# Quantower + pipeline d’analyse Python pour logger des données de marché en temps réel, convertir en Parquet compressé et générer des features/rapports.
+Projet C# Quantower + pipeline Python pour logger des données brutes en temps réel, convertir en Parquet compressé et générer des features/rapports analytiques.
 
 ## Indicateur Quantower
 Nom : `log_all`  
@@ -37,11 +37,13 @@ Variables d’environnement clés :
 - `QT_ARCHIVE_DIR`
 - `QT_ZIP_ARCHIVE`
 - `QT_INACTIVITY_MIN`
+ - `QT_KEEP_CSV` (mode test)
 
 ## Analyse (branche `analysis`)
 Scripts Polars :
 - `tools/analysis/features_1m_from_ticks.py`  
-  OHLC 1m, volumes, delta, CVD, POC, TPO (alias métier)
+  OHLC 1m, volumes, delta, CVD, POC, TPO (alias métier)  
+  + Buy/Sell au High/Low (agressifs)
 - `tools/analysis/quote_pressure_from_quotes.py`  
   Spread/imbalance L1 (alias métier)
 - `tools/analysis/trade_speed_features.py`  
@@ -49,7 +51,11 @@ Scripts Polars :
 
 Rapport HTML :
 - `tools/analysis/build_html_report.py`  
-  Résumé métier + graphiques + stats
+  Résumé métier + graphiques + stats + commentaires automatiques
+- `tools/analysis/build_html_highlow_report.py`  
+  Top 10 Buy/Sell au High/Low
+- `tools/analysis/build_sequential_dataset.py`  
+  Dataset séquentiel (parquet/csv/json/html)
 
 ## Git / Branches
 - `main` : logger Quantower + pipeline Parquet (sans scripts d’analyse)
