@@ -59,6 +59,28 @@ def build_1m_features(ticks: pl.LazyFrame) -> pl.LazyFrame:
         .with_columns((pl.col("vol_buy") - pl.col("vol_sell")).alias("delta"))
     )
 
+    # Buy/Sell at High/Low
+    hl = base.select(["symbol", "minute", "high", "low"])
+    ticks_hl = ticks.join(hl, on=["symbol", "minute"], how="inner")
+    at_high = (
+        ticks_hl.filter(pl.col("price") == pl.col("high"))
+        .group_by(["symbol", "minute"])
+        .agg(
+            pl.sum("buy_vol").alias("buy_at_high"),
+            pl.sum("sell_vol").alias("sell_at_high"),
+        )
+    )
+    at_low = (
+        ticks_hl.filter(pl.col("price") == pl.col("low"))
+        .group_by(["symbol", "minute"])
+        .agg(
+            pl.sum("buy_vol").alias("buy_at_low"),
+            pl.sum("sell_vol").alias("sell_at_low"),
+        )
+    )
+
+    base = base.join(at_high, on=["symbol", "minute"], how="left").join(at_low, on=["symbol", "minute"], how="left")
+
     # CVD (cumulative delta)
     base = base.sort(["symbol", "minute"]).with_columns(
         pl.col("delta").cum_sum().over("symbol").alias("cvd")
@@ -82,6 +104,10 @@ def build_1m_features(ticks: pl.LazyFrame) -> pl.LazyFrame:
             "poc": "poc_price",
             "poc_vol": "poc_contracts",
             "tpo": "tpo_levels",
+            "buy_at_high": "contracts_buy_at_high",
+            "sell_at_high": "contracts_sell_at_high",
+            "buy_at_low": "contracts_buy_at_low",
+            "sell_at_low": "contracts_sell_at_low",
         }
     )
 
